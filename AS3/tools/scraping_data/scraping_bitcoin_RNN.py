@@ -3,6 +3,7 @@ import datetime
 import sys
 import os
 import pandas as pd
+
 file_location = os.path.abspath(__file__)  # Get current file abspath
 root_directory = os.path.dirname(file_location)  # Get root dir
 sys.path.append(os.path.join(root_directory))
@@ -20,7 +21,6 @@ INTERVAL_MS = int(60 * 60 * 1e6)
 BINANCE_HEADER = ["Open time", "Open price", "High price", "Low price", "Close price", "Volume", "Close time",
                   "Quote asset volume", "Number of trades", "Taker buy base asset vol", "Taker buy quote asset vol",
                   "Ignore"]  # Dataframe header
-KW_LIST = ["Bitcoin"]  # KW used by Google trend API
 
 
 class Date:
@@ -36,13 +36,13 @@ class Date:
         self.min = 0 if min is None else min
 
     def get_timestamp(self):
-        return int(float(datetime.datetime(self.y, self.m, self.d, self.h, self.min).strftime('%s.%f'))*1000)
+        return int(float(datetime.datetime(self.y, self.m, self.d, self.h, self.min).strftime('%s.%f')) * 1000)
 
     def print(self):
         print("{}/{:02d}/{:02d} - {:02d}:{:02d}".format(self.y, self.m, self.d, self.h, self.min))
 
 
-def get_klines(start, end) -> pd.DataFrame:
+def get_klines(start, end, pair) -> pd.DataFrame:
     """
     Fetch Binance Klines. Start and end date must represent at most one thousand interval time.
 
@@ -53,7 +53,7 @@ def get_klines(start, end) -> pd.DataFrame:
     Return
         df    -- pd.DataFrame
     """
-    return pd.DataFrame(client.klines(PAIR, INTERVAL, limit=1000, startTime=start, endTime=end), columns=BINANCE_HEADER)
+    return pd.DataFrame(client.klines(pair, INTERVAL, limit=1000, startTime=start, endTime=end), columns=BINANCE_HEADER)
 
 
 def _check_data(df) -> pd.DataFrame:
@@ -87,7 +87,7 @@ def _check_data(df) -> pd.DataFrame:
     return df.sort_values(by=["Open time"]).reset_index(drop=True)
 
 
-def get_data_klines(start, end) -> pd.DataFrame:
+def get_data_klines(start, end, pair) -> pd.DataFrame:
     """
     Multiple get_klines calls (caused by the API limitation) to fetch Binance Klines data from start date to end date.
 
@@ -104,9 +104,9 @@ def get_data_klines(start, end) -> pd.DataFrame:
 
     for t in range(s, e, INTERVAL_MS):
         if t + INTERVAL_MS <= e:
-            df = pd.concat([df, get_klines(t, t + INTERVAL_MS)], ignore_index=True)
+            df = pd.concat([df, get_klines(t, t + INTERVAL_MS, pair)], ignore_index=True)
         else:
-            df = pd.concat([df, get_klines(t, e)], ignore_index=True)
+            df = pd.concat([df, get_klines(t, e, pair)], ignore_index=True)
 
     return _check_data(df.drop_duplicates(subset=["Open time"]).reset_index(drop=True))
 
@@ -125,12 +125,12 @@ def test_time_dfs(df1, df2):
     for i in range(size):
         o1 = int(df1["Open time"][i])
         o2 = int(df2["Open time"][i])
-        if (o1 != o2):
+        if o1 != o2:
             print(i, o1, o2)
             break
 
 
-def formatting(dfs, cols) -> pd.DataFrame:
+def formatting(df, cols) -> pd.DataFrame:
     """
     Formatting the final DataFrame. Dfs is a list with one or multiple DataFrame to be concatenated.
     Cols is a list of the columns required in the final DataFrame.
@@ -144,15 +144,21 @@ def formatting(dfs, cols) -> pd.DataFrame:
     """
     final_df = pd.DataFrame()
 
-    for df in dfs:
-        for col in df.columns:
-            if col in cols and col not in final_df.columns:
-                final_df[col] = df[col].copy()
+    for col in df.columns:
+        if col in cols and col not in final_df.columns:
+            final_df[col] = df[col].copy()
 
     return final_df
 
 
-def export_xlsx(excel_dir, file_xlsx):
-    # Get dataset dir
-    file_xlsx.to_excel(excel_dir, index=False)
-    print(f'Exported to {excel_dir}')
+def create_dataset(start: Date, end: Date, pair=None, path=None) -> pd.DataFrame:
+    if pair is None:
+        pair = PAIR # Default is BTCUSDT if no params
+    df_klines = get_data_klines(start, end, pair)
+
+    df = formatting(df_klines, ["Open time", "Open price", "High price", "Low price", "Close price", "Volume",
+                                "Number of trades"])
+    df.to_excel(path, index=False)
+    print(f'Exported to {path}')
+
+    return df
