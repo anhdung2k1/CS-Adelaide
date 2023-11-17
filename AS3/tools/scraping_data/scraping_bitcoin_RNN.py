@@ -15,7 +15,6 @@ from utils.secrets import *
 [api_key, api_secret] = get_api_key()
 client = Client(api_key, api_secret)
 # Set up params
-PAIR = "BTCUSDT"  # Pair Binance API query
 INTERVAL = "1h"  # Interval Binance API query
 INTERVAL_MS = int(60 * 60 * 1e6)
 BINANCE_HEADER = ["Open time", "Open price", "High price", "Low price", "Close price", "Volume", "Close time",

@@ -9,3 +9,5 @@ tqdm>=4.62.2
 python-binance
 binance-connector
 binance~=0.3
+requests~=2.31.0
+plotly~=5.18.0
