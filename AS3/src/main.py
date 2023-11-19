@@ -10,10 +10,12 @@ _end = Date(today.year, today.month, today.day, 0)
 
 
 def main():
-    dfs, df_dirs = read_all_scraping_data(_start, _end, PAIR[2])
-    print(dfs, df_dirs)
     # Setting up model BTCUSDT Build, Train, Evaluate and Save the [BTCUSDT;MATICUSDT;ETHUSDT] model
     for pair in PAIR:
+        # Read all scraping data, if is not existed create a new ones
+        dfs, df_dirs = read_all_scraping_data(_start, _end, pair)
+        # Plot the image dataset and saved into dataset/assets/<PAIR TYPE>
+        go_figure(dfs[0], pair)
         model_path = os.path.join(root_directory, '..', 'saved_model', pair)
         # Check if the model is existed in saved model folder, otherwise build model in scratch
         load_model = os.path.exists(model_path)

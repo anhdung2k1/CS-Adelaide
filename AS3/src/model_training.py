@@ -40,15 +40,16 @@ def read_all_scraping_data(start, end, pair):
 
 # Generating the figure to visualize for stock respectively [BTCUSDT; MATICUSDT; ETHUSDT] with index 0, 1, 2
 def go_figure(df, pair) -> pd.DataFrame:
-    fig_plot = go.Figure(data=go.Ohlc(x=df['Open time'].apply(lambda x: datetime.fromtimestamp(x / 1000)),
+    fig_plot = go.Figure(data=go.Ohlc(x=df['Open time'].apply(lambda x: datetime.datetime.fromtimestamp(x / 1000)),
                                       open=df['Open price'],
                                       high=df['High price'],
                                       low=df['Low price'],
                                       close=df['Close price']))
     # fig_plot.show()
-    if not os.path.exists(assets_dir):
-        os.mkdir(assets_dir)
-    image_file = os.path.join(assets_dir, pair)
+    pair_dir = os.path.join(assets_dir, pair)
+    if not os.path.exists(pair_dir):
+        os.mkdir(pair_dir)
+    image_file = os.path.join(pair_dir, "{}.png".format(pair))
     fig_plot.write_image(image_file)
 
 
@@ -72,7 +73,7 @@ def generate_dataset(start, end):
 def model_train_evaluate(model, pair):
     model.train_model()
     model.evaluate_model(assets_dir, pair)
-    model.save_model(assets_dir, pair)
+    model.save_model()
 
 
 def model_prediction(model, pair):

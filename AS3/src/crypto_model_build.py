@@ -13,7 +13,7 @@ class ModelBuilder:
     # Hyper parameters
     def __init__(self, path_excel, model_name, load=False):
         self.SEQ_LEN = 100
-        self.TRAIN_SPLIT = 0.9  # Set training and testing part in ratio 8:2
+        self.TRAIN_SPLIT = 0.9  # Set training and testing part in ratio 9:1
         self.BATCH_SIZE = 64  # Set Batch size
         self.EPOCHS = 50  # Set 50 epochs for traning model
         self.VALIDATION_SPLIT = 0.15
@@ -68,7 +68,7 @@ class ModelBuilder:
                                       batch_size=self.BATCH_SIZE,
                                       validation_split=self.VALIDATION_SPLIT)
 
-    def evaluate_model(self, assert_dir, pair):
+    def evaluate_model(self, assets_dir, pair):
         self.loss, self.acc = self.model.evaluate(self.X_test, self.Y_test)
 
         plt.plot(self.history.history['loss'])
@@ -78,10 +78,27 @@ class ModelBuilder:
         plt.xlabel('Epochs')
         plt.legend(['Train', 'Test'], loc='upper left')
         # plt.show()
-        loss_image = os.path.join(assert_dir, 'Model_Loss_{}.png'.format(pair))
-        plt.savefig(loss_image)
+        pair_dir = os.path.join(assets_dir, pair)
 
-    def test_prediction(self, assert_dir, pair):
+        if not os.path.exists(pair_dir):
+            os.mkdir(pair_dir)
+        loss_image = os.path.join(pair_dir, 'Model_Loss_{}.png'.format(pair))
+        plt.savefig(loss_image)
+        plt.clf()
+
+        plt.plot(self.history.history['accuracy'])
+        plt.plot(self.history.history['val_accuracy'])
+        plt.ylabel('Accuracy')
+        plt.xlabel('Epochs')
+        plt.legend(['Train', 'Test'], loc='upper left')
+        # plt.show()
+        if not os.path.exists(pair_dir):
+            os.mkdir(pair_dir)
+        accuracy_image = os.path.join(pair_dir, 'Model_Accuracy_{}.png'.format(pair))
+        plt.savefig(accuracy_image)
+        plt.clf()
+
+    def test_prediction(self, assets_dir, pair):
         y_pred = self.model.predict(self.X_test)
 
         y_test_inverse = self.scaler.inverse_transform(self.Y_test)
@@ -96,14 +113,19 @@ class ModelBuilder:
         plt.legend(loc='best')
 
         # plt.show()
-        predict_image = os.path.join(assert_dir, 'Price_Prediction_{}.png'.format(pair))
+        pair_dir = os.path.join(assets_dir, pair)
+        if not os.path.exists(pair_dir):
+            os.mkdir(pair_dir)
+        predict_image = os.path.join(pair_dir, 'Price_Prediction_{}.png'.format(pair))
         plt.savefig(predict_image)
+        plt.clf()
 
-    def future_prediction(self, assert_dir, pair):
+    def future_prediction(self, assets_dir, pair):
         X_pred = self.X_test
         time = 24 * 10
         for _ in tqdm(range(time)):
-            X_pred = np.vstack([X_pred, np.expand_dims(np.vstack([X_pred[-1, 1:, :], self.model.predict(X_pred)[-1]]), axis=0)])
+            X_pred = np.vstack(
+                [X_pred, np.expand_dims(np.vstack([X_pred[-1, 1:, :], self.model.predict(X_pred)[-1]]), axis=0)])
         y_pred_inv = self.scaler.inverse_transform(X_pred[-time:, -1, :])
         y = np.vstack([self.scaler.inverse_transform(self.model.predict(self.X_test)), y_pred_inv])
 
@@ -116,8 +138,12 @@ class ModelBuilder:
         plt.legend(loc='best')
 
         # plt.show()
-        predict_image = os.path.join(assert_dir, 'Future_Price_Prediction_{}.png'.format(pair))
+        pair_dir = os.path.join(assets_dir, pair)
+        if not os.path.exists(pair_dir):
+            os.mkdir(pair_dir)
+        predict_image = os.path.join(pair_dir, 'Future_Price_Prediction_{}.png'.format(pair))
         plt.savefig(predict_image)
+        plt.clf()
 
     def save_model(self):
         if not self.loaded:
