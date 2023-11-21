@@ -1,3 +1,6 @@
 #Excluding h5 model
 *.h5
 .idea
+.ipynb_checkpoints
+.src/__pycache__
+.fire_dataset/.ipynb_checkpoints

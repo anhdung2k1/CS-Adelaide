@@ -5,7 +5,9 @@ from tensorflow.keras.models import load_model
 import tensorflow as tf
 from PIL import Image
 
-
+file_location = os.path.abspath(__file__)
+root_directory = os.path.dirname(file_location)
+model_path = os.path.join(root_directory, 'saved_model')
 def get_abspath_file(file):
     return os.path.abspath(file)
 
@@ -24,9 +26,9 @@ data_path = os.getcwd() + "/fire_dataset/"
 train_dir = data_path + "train/"
 test_dir = data_path + "test/"
 fireCascade = cv2.CascadeClassifier("fire_cascade.xml")
-
-model = load_model(get_abspath_file("model.h5"))
-model.load_weights(get_abspath_file("model_emotion.h5"))
+# Detect in the real-time camera
+model = load_model(get_abspath_file(os.path.join(model_path, "model.h5")))
+model.load_weights(get_abspath_file(os.path.join(model_path, "model_emotion.h5")))
 video = cv2.VideoCapture(0)
 while True:
     _, frame = video.read()

@@ -20,6 +20,7 @@ INTERVAL_MS = int(60 * 60 * 1e6)
 BINANCE_HEADER = ["Open time", "Open price", "High price", "Low price", "Close price", "Volume", "Close time",
                   "Quote asset volume", "Number of trades", "Taker buy base asset vol", "Taker buy quote asset vol",
                   "Ignore"]  # Dataframe header
+PAIR = ["BTCUSDT", "MATICBUSD", "ETHUSDT"]
 
 
 class Date:
